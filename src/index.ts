@@ -51,9 +51,10 @@ async function fetchStarshipPrompt(cwd: string, width: number): Promise<string |
       // Pass PWD so starship picks up the correct directory context
       { cwd, timeout: 3000, env: { ...process.env, PWD: cwd, STARSHIP_SHELL: "bash" } },
     );
-    // For two-line prompts starship emits info on line 1, ❯ on line 2.
-    // Taking only line 1 drops the prompt character naturally.
-    const firstLine = stdout.split("\n")[0] ?? "";
+    // Skip leading blank lines (some configs use add_newline = true) and take the
+    // first non-empty line — that's the info line. The trailing prompt char line
+    // (❯ / ╰─┼) is naturally dropped.
+    const firstLine = stdout.split("\n").find((l) => l.trim().length > 0) ?? "";
     // bash format: \[ and \] are non-printing markers; ESC is already present
     //   inside them, so just strip the markers.
     // zsh format:  %{ and %} wrap content WITHOUT ESC; add ESC when stripping.
