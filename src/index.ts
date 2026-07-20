@@ -145,15 +145,16 @@ export default function (pi: ExtensionAPI) {
             rightParts.push(" " + dim("◆ ") + cyan(thinkingLevel));
           }
 
-          let inputTok = 0, outputTok = 0, totalCost = 0;
-          for (const e of ctx.sessionManager.getBranch()) {
-            if (e.type === "message" && e.message.role === "assistant") {
-              const m = e.message as AssistantMessage;
-              inputTok  += m.usage.input;
-              outputTok += m.usage.output;
-              totalCost += m.usage.cost.total;
-            }
-          }
+          // Current context usage — last assistant message's input is what
+          // the model actually has in its window right now.
+          const branch = [...ctx.sessionManager.getBranch()];
+          const lastMsg = branch.reverse().find(
+            e => e.type === "message" && e.message.role === "assistant",
+          );
+          const m = lastMsg?.message as AssistantMessage | undefined;
+          const inputTok  = m?.usage.input  ?? 0;
+          const outputTok = m?.usage.output ?? 0;
+          const totalCost = m?.usage.cost.total ?? 0;
 
           if (inputTok > 0 || outputTok > 0) {
             const fmt = (n: number) => n < 1000 ? `${n}` : `${(n / 1000).toFixed(1)}k`;
